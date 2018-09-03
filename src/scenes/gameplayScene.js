@@ -30,10 +30,11 @@ var GamePlayScene = function(game, stage)
 
   self.draw = function()
   {
-    var x = 0;
+    var x = 30;
     var y = 50;
     var w = 200;
     var h = 100;
+    ctx.strokeRect(0,0,canv.width,canv.height);
     draw_scale(middle_a+1, major, x,y, h/4, ctx);
   };
 
