@@ -31,14 +31,10 @@ var GamePlayScene = function(game, stage)
   self.draw = function()
   {
     var x = 0;
-    var y = 100;
+    var y = 50;
     var w = 200;
     var h = 100;
-    var tone = middle_a;
-    var mode = minor;
-    draw_scale(right, tone,                  mode, x,y, h/4, ctx);
-    y += 200;
-    draw_scale(left,  tone-tones_per_octave, mode, x,y, h/4, ctx);
+    draw_scale(middle_a+1, major, x,y, h/4, ctx);
   };
 
   self.cleanup = function()

@@ -54,7 +54,7 @@ var color_for_tone = function(tone)
 
 var glyph_for_tone = function(accidental, tone)
 {
-  switch(tone%tones_per_octave)
+  switch((tone+tones_per_octave)%tones_per_octave)
   {
     case 0:  return                         "A";         break;
     case 1:  return (accidental == sharp) ? "A#" : "Bb"; break;
@@ -194,7 +194,13 @@ var draw_note = function(cx, cy, w, h, ctx)
   ctx.scale(hscale,1);
   ctx.arc(cx/hscale,cy,h/2,0,twopi);
   ctx.restore();
-  ctx.stroke();
+  ctx.fill();
+}
+
+var draw_bubble = function(cx, cy, w, h, ctx)
+{
+  ctx.beginPath();
+  ctx.arc(cx,cy,h/2,0,twopi);
   ctx.fill();
 }
 
@@ -202,37 +208,31 @@ var bass_img   = GenImg("assets/bass.png");
 var treble_img = GenImg("assets/treble.png");
 var flat_img   = GenImg("assets/flat.png");
 var sharp_img  = GenImg("assets/sharp.png");
-var draw_scale = function(hand, tone, mode, x, y, note_h, ctx)
+var draw_scale = function(tone, mode, x, y, note_h, ctx)
 {
   var scale_progression = scale_for_mode(mode);
   var accidental = accidental_for_key(tone, mode);
-  var p = position_for_tone(hand, accidental, tone)
   var blacks = blacks_for_key(tone, mode);
-  var signature_positions = positions_for_signature(hand, accidental);
-  var fingerings = fingerings_for_key(hand, tone, mode);
 
-  ctx.fillStyle = black;
-  ctx.strokeStyle = black;
+  var treble_tone = tone;
+  var bass_tone = tone-tones_per_octave;
+  var treble_p = position_for_tone(treble, accidental, treble_tone)
+  var bass_p   = position_for_tone(bass,   accidental, bass_tone)
+  var treble_signature_positions = positions_for_signature(treble, accidental);
+  var bass_signature_positions   = positions_for_signature(bass,   accidental);
+  var right_fingerings = fingerings_for_key(right, treble_tone, mode);
+  var left_fingerings  = fingerings_for_key(left, bass_tone, mode);
 
   var h = note_h*4;
   var note_w = note_h;
   var clef_w = h*0.75;
   var signature_w = note_w*6*0.75;
   var w = clef_w+signature_w+(note_w*2)*scale_progression.length;
-
-  //lines
-  ctx.lineWidth = floor(h/100);
-  if(ctx.lineWidth == 0) ctx.lineWidth = 1;
-  for(var i = 0; i < 5; i++)
-    drawLine(x,y+note_h*i,x+w,y+note_h*i,ctx);
-
-  //clef
-  //ctx.strokeRect(x,y,clef_w,h);
-  switch(hand)
-  {
-    case bass:   ctx.drawImage(bass_img,x,y,clef_w,h); break;
-    case treble: ctx.drawImage(treble_img,  x-clef_w/2,y-clef_w/2,clef_w*2,h+clef_w); break;
-  }
+  var treble_y = y;
+  var bass_y = y+note_h*8;
+  var keyboard_y = bass_y+note_h*6;
+  var monoboard_y = keyboard_y+note_h*7;
+  var y;
 
   var accidental_img;
   var accidental_oversize = note_w/2;
@@ -242,46 +242,182 @@ var draw_scale = function(hand, tone, mode, x, y, note_h, ctx)
     case sharp: accidental_img = sharp_img; break;
   }
 
+  ctx.fillStyle = black;
+  ctx.strokeStyle = black;
+  ctx.textAlign = "center";
+  ctx.font = floor(note_h*0.8)+"px Arial";
+
+  //lines
+  ctx.lineWidth = floor(h/100);
+  if(ctx.lineWidth == 0) ctx.lineWidth = 1;
+  for(var i = 0; i < 5; i++) drawLine(x,treble_y+note_h*i,x+w,treble_y+note_h*i,ctx);
+  for(var i = 0; i < 5; i++) drawLine(x,bass_y+note_h*i,x+w,bass_y+note_h*i,ctx);
+
+  //clef
+  ctx.drawImage(treble_img,x-clef_w/2,treble_y-clef_w/2,clef_w*2,h+clef_w);
+  ctx.drawImage(bass_img,x,bass_y,clef_w,h);
+
   //signature
-  var signature_x = x+clef_w;
-  var signature_y;
-  for(var i = 0; i < blacks; i++)
+  for(var twice = 0; twice < 2; twice++)
   {
-    signature_y = y+h-signature_positions[i]*note_h/2;
-    //ctx.strokeRect(signature_x, signature_y, note_w, note_h);
-    ctx.drawImage(accidental_img, signature_x-accidental_oversize/2, signature_y-accidental_oversize/2, note_w+accidental_oversize, note_h+accidental_oversize);
-    signature_x += note_w*0.75;
+    var signature_x = x+clef_w;
+    var signature_y;
+    var signature_positions;
+    if(twice == 0) //treble
+    {
+      y = treble_y;
+      signature_positions = treble_signature_positions;
+    }
+    else //bass
+    {
+      y = bass_y;
+      signature_positions = bass_signature_positions;
+    }
+    for(var i = 0; i < blacks; i++)
+    {
+      signature_y = y+h-signature_positions[i]*note_h/2;
+      ctx.drawImage(accidental_img, signature_x-accidental_oversize/2, signature_y-accidental_oversize/2, note_w+accidental_oversize, note_h+accidental_oversize);
+      signature_x += note_w*0.75;
+    }
   }
 
   //notes
-  var note_x = x+clef_w+signature_w;
-  var note_y;
-  var note_p;
-  for(var i = 0; i < scale_progression.length; i++)
+  for(var twice = 0; twice < 2; twice++)
   {
-    note_p = p+i;
-    note_y = y+h-note_p*note_h/2;
-    if((note_p < 0 || note_p > 10) && (note_p+100)%2 == 1)
-      drawLine(note_x-note_w/2, note_y+note_h/2, note_x+note_w+note_w/2, note_y+note_h/2, ctx);
-    if(color_for_tone(tone+scale_progression[i]) == -1)
-      //ctx.strokeRect(note_x-note_w, note_y, note_w, note_h);
-      ctx.drawImage(accidental_img, note_x-note_w-accidental_oversize/2, note_y-accidental_oversize/2, note_w+accidental_oversize, note_h+accidental_oversize);
-    //ctx.strokeRect(note_x, note_y, note_w, note_h);
-    draw_note(note_x+note_w/2, note_y+note_h/2, note_w, note_h, ctx);
-    note_x += note_w*2;
+    var note_x = x+clef_w+signature_w;
+    var note_y;
+    var note_p;
+    var p;
+    var fingerings;
+    if(twice == 0) //treble
+    {
+      tone = treble_tone;
+      y = treble_y;
+      p = treble_p;
+      fingerings = right_fingerings;
+    }
+    else //bass
+    {
+      tone = bass_tone;
+      y = bass_y;
+      p = bass_p;
+      fingerings = left_fingerings;
+    }
+    for(var i = 0; i < scale_progression.length; i++)
+    {
+      note_p = p+i;
+      note_y = y+h-note_p*note_h/2;
+      if((note_p < 0 || note_p > 10) && (note_p+100)%2 == 1)
+        drawLine(note_x-note_w/2, note_y+note_h/2, note_x+note_w+note_w/2, note_y+note_h/2, ctx);
+      if(color_for_tone(tone+scale_progression[i]) == -1)
+        //ctx.strokeRect(note_x-note_w, note_y, note_w, note_h);
+        ctx.drawImage(accidental_img, note_x-note_w-accidental_oversize/2, note_y-accidental_oversize/2, note_w+accidental_oversize, note_h+accidental_oversize);
+      //ctx.strokeRect(note_x, note_y, note_w, note_h);
+      draw_note(note_x+note_w/2, note_y+note_h/2, note_w, note_h, ctx);
+      ctx.fillStyle = white;
+      ctx.fillText(fingerings[i], note_x+note_w/2, note_y+note_h/2+note_h/3);
+      ctx.fillStyle = black;
+      note_x += note_w*2;
+    }
   }
 
-  //fingerings
-  ctx.fillStyle = white;
-  ctx.textAlign = "center";
-  ctx.font = floor(note_h*0.8)+"px Arial";
-  note_x = x+clef_w+signature_w; //duplicate note placement!
-  for(var i = 0; i < fingerings.length; i++)
+  var n_keys_displayed = whites_per_octave*3;
+  var key_w = w/n_keys_displayed;
+  var key_x = x;
+  var key_h = note_h*5;
+  var root_tone = bass_tone%tones_per_octave;
+  var tone_i = 0;
+  var progression_i = 0;
+  var bubble_h = key_h/8;
+  ctx.font = floor(bubble_h*0.8)+"px Arial";
+  for(var i = 0; i < n_keys_displayed; i++)
+    ctx.strokeRect(key_x+key_w*i,keyboard_y,key_w,key_h);
+  for(var i = 0; i < n_keys_displayed; i++)
   {
-    note_p = p+i;
-    note_y = y+h-note_p*note_h/2;
-    ctx.fillText(fingerings[i], note_x+note_w/2, note_y+note_h/2+note_h/3);
-    note_x += note_w*2;
+    if(progression_i < scale_progression.length && tone_i == root_tone+scale_progression[progression_i])
+    { //left hand
+      ctx.fillStyle = black;
+      var bx = key_x+key_w/2;
+      var by = keyboard_y+key_h*3/4-bubble_h;
+      draw_bubble(bx, by, bubble_h, bubble_h, ctx);
+      ctx.fillStyle = white;
+      ctx.fillText(left_fingerings[progression_i], bx, by+bubble_h/3);
+      progression_i++;
+    }
+    if(progression_i >= scale_progression.length && tone_i == root_tone+tones_per_octave+scale_progression[progression_i-scale_progression.length])
+    { //right hand
+      ctx.fillStyle = black;
+      var bx = key_x+key_w/2;
+      var by = keyboard_y+key_h*3/4+bubble_h;
+      draw_bubble(bx, by, bubble_h, bubble_h, ctx);
+      ctx.fillStyle = white;
+      ctx.fillText(right_fingerings[progression_i-scale_progression.length], bx, by+bubble_h/3);
+      progression_i++;
+    }
+    tone_i++;
+    if(i+1 < n_keys_displayed && color_for_tone(tone_i) == -1)
+    {
+      ctx.fillStyle = black;
+      ctx.fillRect(key_x+key_w*2/3,keyboard_y,key_w*2/3,key_h/2);
+      if(progression_i < scale_progression.length && tone_i == root_tone+scale_progression[progression_i])
+      { //left hand
+        ctx.fillStyle = white;
+        var bx = key_x+key_w;
+        var by = keyboard_y+key_h/4-bubble_h;
+        draw_bubble(bx, by, bubble_h, bubble_h, ctx);
+        ctx.fillStyle = black;
+        ctx.fillText(left_fingerings[progression_i], bx, by+bubble_h/3);
+        progression_i++;
+      }
+      if(progression_i >= scale_progression.length && tone_i == root_tone+tones_per_octave+scale_progression[progression_i-scale_progression.length])
+      { //right hand
+        ctx.fillStyle = white;
+        var bx = key_x+key_w;
+        var by = keyboard_y+key_h/4+bubble_h;
+        draw_bubble(bx, by, bubble_h, bubble_h, ctx);
+        ctx.fillStyle = black;
+        ctx.fillText(right_fingerings[progression_i-scale_progression.length], bx, by+bubble_h/3);
+        progression_i++;
+      }
+      tone_i++;
+    }
+    key_x += key_w;
   }
+
+  n_keys_displayed = tones_per_octave*3;
+  key_w = w/n_keys_displayed;
+  key_x = x;
+  key_h = note_h*1;
+  tone_i = 0;
+  progression_i = 0;
+  for(var i = 0; i < n_keys_displayed; i++)
+  {
+    ctx.strokeRect(key_x,monoboard_y,key_w,key_h);
+    if(progression_i < scale_progression.length && tone_i == root_tone+scale_progression[progression_i])
+    { //left hand
+      ctx.fillStyle = black;
+      var bx = key_x+key_w/2;
+      var by = monoboard_y-bubble_h/4;
+      draw_bubble(bx, by, bubble_h, bubble_h, ctx);
+      ctx.fillStyle = white;
+      ctx.fillText(left_fingerings[progression_i], bx, by+bubble_h/3);
+      progression_i++;
+    }
+    if(progression_i >= scale_progression.length && tone_i == root_tone+tones_per_octave+scale_progression[progression_i-scale_progression.length])
+    { //right hand
+      ctx.fillStyle = black;
+      var bx = key_x+key_w/2;
+      var by = monoboard_y+key_h+bubble_h/4;
+      draw_bubble(bx, by, bubble_h, bubble_h, ctx);
+      ctx.fillStyle = white;
+      ctx.fillText(right_fingerings[progression_i-scale_progression.length], bx, by+bubble_h/3);
+      progression_i++;
+    }
+    ctx.fillStyle = black;
+    ctx.fillText(glyph_for_tone(accidental, tone_i),key_x+key_w/2,monoboard_y+key_h*2/3);
+    tone_i++;
+    key_x += key_w;
+  }
+
 }
 
