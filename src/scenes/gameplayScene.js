@@ -19,8 +19,6 @@ var GamePlayScene = function(game, stage)
   var hoverer;
   var clicker;
 
-
-
   self.ready = function()
   {
     self.resize(stage);
@@ -32,6 +30,14 @@ var GamePlayScene = function(game, stage)
 
   self.draw = function()
   {
+    var x = 100;
+    var y = 100;
+    var w = 200;
+    var h = 100;
+    ctx.strokeStyle = green;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x,y,w,h);
+    draw_scale(1,middle_a,1, x,y, h/4, ctx);
   };
 
   self.cleanup = function()
