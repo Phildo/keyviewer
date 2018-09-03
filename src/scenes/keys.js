@@ -93,7 +93,7 @@ var position_for_tone = function(clef, accidental, tone)
 
 var accidental_for_key = function(tone, mode)
 {
-  if(mode == minor) tone += 9;
+  if(mode == minor) tone += 3;
   switch(tone%tones_per_octave)
   {
     //               M
@@ -114,7 +114,7 @@ var accidental_for_key = function(tone, mode)
 
 var blacks_for_key = function(tone, mode)
 {
-  if(mode == minor) tone += 9;
+  if(mode == minor) tone += 3;
   switch(tone%tones_per_octave)
   {
     //              M
@@ -181,11 +181,27 @@ var fingerings_major_right = [
 ];
 var fingerings_for_key = function(hand, tone, mode)
 {
-  if(mode == minor) tone += 9;
+  if(mode == minor) tone += 3;
        if(hand == left)  return fingerings_major_left[tone%tones_per_octave];
   else if(hand == right) return fingerings_major_right[tone%tones_per_octave];
 }
 
+var draw_note = function(cx, cy, w, h, ctx)
+{
+  var hscale = 1.2;
+  ctx.beginPath();
+  ctx.save();
+  ctx.scale(hscale,1);
+  ctx.arc(cx/hscale,cy,h/2,0,twopi);
+  ctx.restore();
+  ctx.stroke();
+  ctx.fill();
+}
+
+var bass_img   = GenImg("assets/bass.png");
+var treble_img = GenImg("assets/treble.png");
+var flat_img   = GenImg("assets/flat.png");
+var sharp_img  = GenImg("assets/sharp.png");
 var draw_scale = function(hand, tone, mode, x, y, note_h, ctx)
 {
   var scale_progression = scale_for_mode(mode);
@@ -201,16 +217,30 @@ var draw_scale = function(hand, tone, mode, x, y, note_h, ctx)
   var h = note_h*4;
   var note_w = note_h;
   var clef_w = h*0.75;
-  var signature_w = note_w*3;
-  var w = clef_w+signature_w+(note_w*1.5)*scale_progression.length;
+  var signature_w = note_w*6*0.75;
+  var w = clef_w+signature_w+(note_w*2)*scale_progression.length;
 
   //lines
-  ctx.lineWidth = h/100;
+  ctx.lineWidth = floor(h/100);
+  if(ctx.lineWidth == 0) ctx.lineWidth = 1;
   for(var i = 0; i < 5; i++)
     drawLine(x,y+note_h*i,x+w,y+note_h*i,ctx);
 
   //clef
-  ctx.strokeRect(x,y,clef_w,h);
+  //ctx.strokeRect(x,y,clef_w,h);
+  switch(hand)
+  {
+    case bass:   ctx.drawImage(bass_img,x,y,clef_w,h); break;
+    case treble: ctx.drawImage(treble_img,  x-clef_w/2,y-clef_w/2,clef_w*2,h+clef_w); break;
+  }
+
+  var accidental_img;
+  var accidental_oversize = note_w/2;
+  switch(accidental)
+  {
+    case flat:  accidental_img = flat_img;  break;
+    case sharp: accidental_img = sharp_img; break;
+  }
 
   //signature
   var signature_x = x+clef_w;
@@ -218,8 +248,9 @@ var draw_scale = function(hand, tone, mode, x, y, note_h, ctx)
   for(var i = 0; i < blacks; i++)
   {
     signature_y = y+h-signature_positions[i]*note_h/2;
-    ctx.strokeRect(signature_x, signature_y, note_w, note_h);
-    signature_x += note_w/2;
+    //ctx.strokeRect(signature_x, signature_y, note_w, note_h);
+    ctx.drawImage(accidental_img, signature_x-accidental_oversize/2, signature_y-accidental_oversize/2, note_w+accidental_oversize, note_h+accidental_oversize);
+    signature_x += note_w*0.75;
   }
 
   //notes
@@ -231,23 +262,26 @@ var draw_scale = function(hand, tone, mode, x, y, note_h, ctx)
     note_p = p+i;
     note_y = y+h-note_p*note_h/2;
     if((note_p < 0 || note_p > 10) && (note_p+100)%2 == 1)
-      drawLine(note_x, note_y+note_h/2, note_x+note_w, note_y+note_h/2, ctx);
+      drawLine(note_x-note_w/2, note_y+note_h/2, note_x+note_w+note_w/2, note_y+note_h/2, ctx);
     if(color_for_tone(tone+scale_progression[i]) == -1)
-      ctx.strokeRect(note_x-note_w/2, note_y, note_w, note_h);
-    ctx.strokeRect(note_x, note_y, note_w, note_h);
-    note_x += note_w*1.5;
+      //ctx.strokeRect(note_x-note_w, note_y, note_w, note_h);
+      ctx.drawImage(accidental_img, note_x-note_w-accidental_oversize/2, note_y-accidental_oversize/2, note_w+accidental_oversize, note_h+accidental_oversize);
+    //ctx.strokeRect(note_x, note_y, note_w, note_h);
+    draw_note(note_x+note_w/2, note_y+note_h/2, note_w, note_h, ctx);
+    note_x += note_w*2;
   }
 
   //fingerings
-  ctx.fillStyle = blue;
+  ctx.fillStyle = white;
   ctx.textAlign = "center";
+  ctx.font = floor(note_h*0.8)+"px Arial";
   note_x = x+clef_w+signature_w; //duplicate note placement!
   for(var i = 0; i < fingerings.length; i++)
   {
     note_p = p+i;
     note_y = y+h-note_p*note_h/2;
-    ctx.fillText(fingerings[i], note_x+note_w/2, note_y+note_h/2);
-    note_x += note_w*1.5;
+    ctx.fillText(fingerings[i], note_x+note_w/2, note_y+note_h/2+note_h/3);
+    note_x += note_w*2;
   }
 }
 
