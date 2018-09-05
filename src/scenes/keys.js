@@ -186,6 +186,13 @@ var fingerings_for_key = function(hand, tone, mode)
   else if(hand == right) return fingerings_major_right[tone%tones_per_octave];
 }
 
+var middleify_tone = function(tone)
+{
+  while(tone < middle_a)                  tone += tones_per_octave;
+  while(tone > middle_a+tones_per_octave) tone -= tones_per_octave;
+  return tone;
+}
+
 var draw_note = function(cx, cy, w, h, ctx)
 {
   var hscale = 1.2;
@@ -277,7 +284,7 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
     {
       signature_y = y+h-signature_positions[i]*note_h/2;
       ctx.drawImage(accidental_img, signature_x-accidental_oversize/2, signature_y-accidental_oversize/2, note_w+accidental_oversize, note_h+accidental_oversize);
-      signature_x += note_w*0.75;
+      signature_x += note_w/2;
     }
   }
 
@@ -419,5 +426,95 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
     key_x += key_w;
   }
 
+}
+
+var hover_scale = function(tone, mode, x, y, note_h, doX, doY)
+{
+  var scale_progression = scale_for_mode(mode);
+  var accidental = accidental_for_key(tone, mode);
+  var blacks = blacks_for_key(tone, mode);
+
+  var treble_tone = tone;
+  var bass_tone = tone-tones_per_octave;
+  var treble_p = position_for_tone(treble, accidental, treble_tone)
+  var bass_p   = position_for_tone(bass,   accidental, bass_tone)
+  var treble_signature_positions = positions_for_signature(treble, accidental);
+  var bass_signature_positions   = positions_for_signature(bass,   accidental);
+
+  var h = note_h*4;
+  var note_w = note_h;
+  var clef_w = h*0.75;
+  var signature_w = note_w*6*0.75;
+  var w = clef_w+signature_w+(note_w*2)*scale_progression.length;
+  var treble_y = y;
+  var bass_y = y+note_h*8;
+  var keyboard_y = bass_y+note_h*6;
+  var monoboard_y = keyboard_y+note_h*7;
+  var y;
+
+  //notes
+  for(var twice = 0; twice < 2; twice++)
+  {
+    var note_x = x+clef_w+signature_w;
+    var note_y;
+    var note_p;
+    var p;
+    if(twice == 0) //treble
+    {
+      tone = treble_tone;
+      y = treble_y;
+      p = treble_p;
+    }
+    else //bass
+    {
+      tone = bass_tone;
+      y = bass_y;
+      p = bass_p;
+    }
+    for(var i = 0; i < scale_progression.length; i++)
+    {
+      note_p = p+i;
+      note_y = y+h-note_p*note_h/2;
+      if(ptWithin(note_x,note_y,note_w,note_h,doX,doY)) return middleify_tone(tone + scale_progression[i]);
+      note_x += note_w*2;
+    }
+  }
+
+  var n_keys_displayed = whites_per_octave*3;
+  var key_w = w/n_keys_displayed;
+  var key_x = x;
+  var key_h = note_h*5;
+  var root_tone = bass_tone%tones_per_octave;
+  var tone_i = 0;
+  var progression_i = 0;
+  var bubble_h = key_h/8;
+  var tentative = -1;
+  for(var i = 0; i < n_keys_displayed; i++)
+  {
+    if(ptWithin(key_x,keyboard_y,key_w,key_h,doX,doY)) tentative = middleify_tone(tone_i);
+    tone_i++;
+    if(i+1 < n_keys_displayed && color_for_tone(tone_i) == -1)
+    {
+      if(ptWithin(key_x+key_w*2/3,keyboard_y,key_w*2/3,key_h/2,doX,doY)) return middleify_tone(tone_i);
+      tone_i++;
+    }
+    key_x += key_w;
+    if(tentative != -1) return tentative;
+  }
+
+  n_keys_displayed = tones_per_octave*3;
+  key_w = w/n_keys_displayed;
+  key_x = x;
+  key_h = note_h*1;
+  tone_i = 0;
+  progression_i = 0;
+  for(var i = 0; i < n_keys_displayed; i++)
+  {
+    if(ptWithin(key_x,monoboard_y,key_w,key_h,doX,doY)) return middleify_tone(tone_i);
+    tone_i++;
+    key_x += key_w;
+  }
+
+  return -1;
 }
 
