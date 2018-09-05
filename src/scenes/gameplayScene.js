@@ -28,6 +28,9 @@ var GamePlayScene = function(game, stage)
   var draw_y = 50;
   var draw_note_h = 25;
 
+  var major_btn = {x:draw_x,                      y:stage.canv.height-100-draw_x, w:100, h:100};
+  var minor_btn = {x:stage.canv.width-100-draw_x, y:stage.canv.height-100-draw_x, w:100, h:100};
+
   self.ready = function()
   {
     self.resize(stage);
@@ -35,7 +38,7 @@ var GamePlayScene = function(game, stage)
     tone = middle_a;
     mode = major;
     hover_tone = -1;
-    hover_mode = -1;
+    hover_mode = 0; //confusing, but -1 = minor, 1 = major
   };
 
   self.tick = function()
@@ -44,8 +47,18 @@ var GamePlayScene = function(game, stage)
     clicker.filter(catcher);
     hoverer.flush();
     clicker.flush();
-    if(catcher.evt) hover_tone = hover_scale(tone, mode, draw_x, draw_y, draw_note_h, catcher.evt.doX, catcher.evt.doY);
-    if(catcher.clicked && hover_tone && hover_tone != -1) tone = hover_tone;
+    if(catcher.evt)
+    {
+      hover_tone = hover_scale(tone, mode, draw_x, draw_y, draw_note_h, catcher.evt.doX, catcher.evt.doY);
+      hover_mode = 0;
+      if(ptWithinBox(major_btn, catcher.evt.doX, catcher.evt.doY)) hover_mode = major;
+      if(ptWithinBox(minor_btn, catcher.evt.doX, catcher.evt.doY)) hover_mode = minor;
+    }
+    if(catcher.clicked)
+    {
+      if(hover_tone && hover_tone != -1) tone = hover_tone;
+      if(hover_mode) mode = hover_mode;
+    }
     catcher.flush();
   };
 
@@ -55,8 +68,10 @@ var GamePlayScene = function(game, stage)
     var disp_tone = tone;
     var disp_mode = mode;
     if(hover_tone != -1) disp_tone = hover_tone;
-    if(hover_mode != -1) disp_mode = hover_mode;
+    if(hover_mode !=  0) disp_mode = hover_mode;
     draw_scale(disp_tone, disp_mode, draw_x, draw_y, draw_note_h, ctx);
+    ctx.fillText("Major",major_btn.x+major_btn.w/2,major_btn.y+30); strokeBox(major_btn,ctx);
+    ctx.fillText("Minor",minor_btn.x+minor_btn.w/2,minor_btn.y+30); strokeBox(minor_btn,ctx);
   };
 
   self.cleanup = function()

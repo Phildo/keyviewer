@@ -314,6 +314,11 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
     {
       note_p = p+i;
       note_y = y+h-note_p*note_h/2;
+      switch(i)
+      {
+        case 0: case 2: case 4: ctx.fillStyle = red;   ctx.strokeStyle = red; break;
+        default:                ctx.fillStyle = black; ctx.strokeStyle = black; break;
+      }
       if((note_p < 0 || note_p > 10) && (note_p+100)%2 == 1)
         drawLine(note_x-note_w/2, note_y+note_h/2, note_x+note_w+note_w/2, note_y+note_h/2, ctx);
       if(color_for_tone(tone+scale_progression[i]) == -1)
@@ -343,7 +348,11 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
   {
     if(progression_i < scale_progression.length && tone_i == root_tone+scale_progression[progression_i])
     { //left hand
-      ctx.fillStyle = black;
+      switch(progression_i)
+      {
+        case 0: case 2: case 4: ctx.fillStyle = red;   ctx.strokeStyle = red; break;
+        default:                ctx.fillStyle = black; ctx.strokeStyle = black; break;
+      }
       var bx = key_x+key_w/2;
       var by = keyboard_y+key_h*3/4-bubble_h;
       draw_bubble(bx, by, bubble_h, bubble_h, ctx);
@@ -353,7 +362,11 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
     }
     if(progression_i >= scale_progression.length && tone_i == root_tone+tones_per_octave+scale_progression[progression_i-scale_progression.length])
     { //right hand
-      ctx.fillStyle = black;
+      switch(progression_i-scale_progression.length)
+      {
+        case 0: case 2: case 4: ctx.fillStyle = red;   ctx.strokeStyle = red; break;
+        default:                ctx.fillStyle = black; ctx.strokeStyle = black; break;
+      }
       var bx = key_x+key_w/2;
       var by = keyboard_y+key_h*3/4+bubble_h;
       draw_bubble(bx, by, bubble_h, bubble_h, ctx);
@@ -368,7 +381,11 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
       ctx.fillRect(key_x+key_w*2/3,keyboard_y,key_w*2/3,key_h/2);
       if(progression_i < scale_progression.length && tone_i == root_tone+scale_progression[progression_i])
       { //left hand
-        ctx.fillStyle = white;
+        switch(progression_i)
+        {
+          case 0: case 2: case 4: ctx.fillStyle = red;   ctx.strokeStyle = red; break;
+          default:                ctx.fillStyle = white; ctx.strokeStyle = white; break;
+        }
         var bx = key_x+key_w;
         var by = keyboard_y+key_h/4-bubble_h;
         draw_bubble(bx, by, bubble_h, bubble_h, ctx);
@@ -378,7 +395,11 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
       }
       if(progression_i >= scale_progression.length && tone_i == root_tone+tones_per_octave+scale_progression[progression_i-scale_progression.length])
       { //right hand
-        ctx.fillStyle = white;
+        switch(progression_i-scale_progression.length)
+        {
+          case 0: case 2: case 4: ctx.fillStyle = red;   ctx.strokeStyle = red; break;
+          default:                ctx.fillStyle = white; ctx.strokeStyle = white; break;
+        }
         var bx = key_x+key_w;
         var by = keyboard_y+key_h/4+bubble_h;
         draw_bubble(bx, by, bubble_h, bubble_h, ctx);
@@ -391,6 +412,7 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
     key_x += key_w;
   }
 
+  //tempered
   n_keys_displayed = tones_per_octave*3;
   key_w = w/n_keys_displayed;
   key_x = x;
@@ -399,10 +421,15 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
   progression_i = 0;
   for(var i = 0; i < n_keys_displayed; i++)
   {
+    ctx.strokeStyle = black;
     ctx.strokeRect(key_x,monoboard_y,key_w,key_h);
     if(progression_i < scale_progression.length && tone_i == root_tone+scale_progression[progression_i])
     { //left hand
-      ctx.fillStyle = black;
+      switch(progression_i)
+      {
+        case 0: case 2: case 4: ctx.fillStyle = red;   ctx.strokeStyle = red; break;
+        default:                ctx.fillStyle = black; ctx.strokeStyle = black; break;
+      }
       var bx = key_x+key_w/2;
       var by = monoboard_y-bubble_h/4;
       draw_bubble(bx, by, bubble_h, bubble_h, ctx);
@@ -412,7 +439,11 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
     }
     if(progression_i >= scale_progression.length && tone_i == root_tone+tones_per_octave+scale_progression[progression_i-scale_progression.length])
     { //right hand
-      ctx.fillStyle = black;
+      switch(progression_i-scale_progression.length)
+      {
+        case 0: case 2: case 4: ctx.fillStyle = red;   ctx.strokeStyle = red; break;
+        default:                ctx.fillStyle = black; ctx.strokeStyle = black; break;
+      }
       var bx = key_x+key_w/2;
       var by = monoboard_y+key_h+bubble_h/4;
       draw_bubble(bx, by, bubble_h, bubble_h, ctx);
