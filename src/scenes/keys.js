@@ -215,7 +215,7 @@ var bass_img   = GenImg("assets/bass.png");
 var treble_img = GenImg("assets/treble.png");
 var flat_img   = GenImg("assets/flat.png");
 var sharp_img  = GenImg("assets/sharp.png");
-var draw_scale = function(tone, mode, x, y, note_h, ctx)
+var draw_scale = function(tone, mode, x, y, note_h, content_alpha, ctx)
 {
   var scale_progression = scale_for_mode(mode);
   var accidental = accidental_for_key(tone, mode);
@@ -238,7 +238,8 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
   var treble_y = y;
   var bass_y = y+note_h*8;
   var keyboard_y = bass_y+note_h*6;
-  var monoboard_y = keyboard_y+note_h*7;
+  var listboard_y = keyboard_y+note_h*6;
+  var canonboard_y = listboard_y+note_h*2;
   var y;
 
   var accidental_img;
@@ -265,6 +266,7 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
   ctx.drawImage(bass_img,x,bass_y,clef_w,h);
 
   //signature
+  ctx.globalAlpha = content_alpha;
   for(var twice = 0; twice < 2; twice++)
   {
     var signature_x = x+clef_w;
@@ -287,8 +289,10 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
       signature_x += note_w/2;
     }
   }
+  ctx.globalAlpha = 1;
 
   //notes
+  ctx.globalAlpha = content_alpha;
   for(var twice = 0; twice < 2; twice++)
   {
     var note_x = x+clef_w+signature_w;
@@ -332,7 +336,9 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
       note_x += note_w*2;
     }
   }
+  ctx.globalAlpha = 1;
 
+  //piano
   var n_keys_displayed = whites_per_octave*3;
   var key_w = w/n_keys_displayed;
   var key_x = x;
@@ -355,7 +361,9 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
       }
       var bx = key_x+key_w/2;
       var by = keyboard_y+key_h*3/4-bubble_h;
+      ctx.globalAlpha = content_alpha*0.6;
       draw_bubble(bx, by, bubble_h, bubble_h, ctx);
+      ctx.globalAlpha = 1;
       ctx.fillStyle = white;
       ctx.fillText(left_fingerings[progression_i], bx, by+bubble_h/3);
       progression_i++;
@@ -369,7 +377,9 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
       }
       var bx = key_x+key_w/2;
       var by = keyboard_y+key_h*3/4+bubble_h;
+      ctx.globalAlpha = content_alpha;
       draw_bubble(bx, by, bubble_h, bubble_h, ctx);
+      ctx.globalAlpha = 1;
       ctx.fillStyle = white;
       ctx.fillText(right_fingerings[progression_i-scale_progression.length], bx, by+bubble_h/3);
       progression_i++;
@@ -388,7 +398,9 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
         }
         var bx = key_x+key_w;
         var by = keyboard_y+key_h/4-bubble_h;
+        ctx.globalAlpha = content_alpha*0.6;
         draw_bubble(bx, by, bubble_h, bubble_h, ctx);
+        ctx.globalAlpha = 1;
         ctx.fillStyle = black;
         ctx.fillText(left_fingerings[progression_i], bx, by+bubble_h/3);
         progression_i++;
@@ -402,7 +414,9 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
         }
         var bx = key_x+key_w;
         var by = keyboard_y+key_h/4+bubble_h;
+        ctx.globalAlpha = content_alpha;
         draw_bubble(bx, by, bubble_h, bubble_h, ctx);
+        ctx.globalAlpha = 1;
         ctx.fillStyle = black;
         ctx.fillText(right_fingerings[progression_i-scale_progression.length], bx, by+bubble_h/3);
         progression_i++;
@@ -412,7 +426,7 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
     key_x += key_w;
   }
 
-  //tempered
+  //list
   n_keys_displayed = tones_per_octave*3;
   key_w = w/n_keys_displayed;
   key_x = x;
@@ -422,7 +436,7 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
   for(var i = 0; i < n_keys_displayed; i++)
   {
     ctx.strokeStyle = black;
-    ctx.strokeRect(key_x,monoboard_y,key_w,key_h);
+    ctx.strokeRect(key_x,listboard_y,key_w,key_h);
     if(progression_i < scale_progression.length && tone_i == root_tone+scale_progression[progression_i])
     { //left hand
       switch(progression_i)
@@ -431,8 +445,10 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
         default:                ctx.fillStyle = black; ctx.strokeStyle = black; break;
       }
       var bx = key_x+key_w/2;
-      var by = monoboard_y-bubble_h/4;
+      var by = listboard_y-bubble_h/4;
+      ctx.globalAlpha = content_alpha;
       draw_bubble(bx, by, bubble_h, bubble_h, ctx);
+      ctx.globalAlpha = 1;
       ctx.fillStyle = white;
       ctx.fillText(left_fingerings[progression_i], bx, by+bubble_h/3);
       progression_i++;
@@ -445,14 +461,39 @@ var draw_scale = function(tone, mode, x, y, note_h, ctx)
         default:                ctx.fillStyle = black; ctx.strokeStyle = black; break;
       }
       var bx = key_x+key_w/2;
-      var by = monoboard_y+key_h+bubble_h/4;
+      var by = listboard_y+key_h+bubble_h/4;
+      ctx.globalAlpha = content_alpha;
       draw_bubble(bx, by, bubble_h, bubble_h, ctx);
+      ctx.globalAlpha = 1;
       ctx.fillStyle = white;
       ctx.fillText(right_fingerings[progression_i-scale_progression.length], bx, by+bubble_h/3);
       progression_i++;
     }
     ctx.fillStyle = black;
-    ctx.fillText(glyph_for_tone(accidental, tone_i),key_x+key_w/2,monoboard_y+key_h*2/3);
+    ctx.fillText(glyph_for_tone(accidental, tone_i),key_x+key_w/2,listboard_y+key_h*2/3);
+    tone_i++;
+    key_x += key_w;
+  }
+
+  //canonical
+  n_keys_displayed = tones_per_octave;
+  key_w = w/n_keys_displayed;
+  key_x = x;
+  key_h = note_h*2;
+  tone_i = 0;
+  progression_i = 0;
+  ctx.strokeStyle = black;
+  ctx.fillStyle = black;
+  for(var i = 0; i < n_keys_displayed; i++)
+  {
+    if(tone%tones_per_octave == i)
+    {
+      ctx.fillStyle = gray;
+      ctx.fillRect(key_x,canonboard_y,key_w,key_h);
+      ctx.fillStyle = black;
+    }
+    ctx.strokeRect(key_x,canonboard_y,key_w,key_h);
+    ctx.fillText(glyph_for_tone(accidental, tone_i),key_x+key_w/2,canonboard_y+key_h*2/3);
     tone_i++;
     key_x += key_w;
   }
@@ -480,7 +521,8 @@ var hover_scale = function(tone, mode, x, y, note_h, doX, doY)
   var treble_y = y;
   var bass_y = y+note_h*8;
   var keyboard_y = bass_y+note_h*6;
-  var monoboard_y = keyboard_y+note_h*7;
+  var listboard_y = keyboard_y+note_h*6;
+  var canonboard_y = listboard_y+note_h*2;
   var y;
 
   //notes
@@ -511,6 +553,7 @@ var hover_scale = function(tone, mode, x, y, note_h, doX, doY)
     }
   }
 
+  //keyboard
   var n_keys_displayed = whites_per_octave*3;
   var key_w = w/n_keys_displayed;
   var key_x = x;
@@ -533,6 +576,7 @@ var hover_scale = function(tone, mode, x, y, note_h, doX, doY)
     if(tentative != -1) return tentative;
   }
 
+  //list
   n_keys_displayed = tones_per_octave*3;
   key_w = w/n_keys_displayed;
   key_x = x;
@@ -541,7 +585,21 @@ var hover_scale = function(tone, mode, x, y, note_h, doX, doY)
   progression_i = 0;
   for(var i = 0; i < n_keys_displayed; i++)
   {
-    if(ptWithin(key_x,monoboard_y,key_w,key_h,doX,doY)) return middleify_tone(tone_i);
+    if(ptWithin(key_x,listboard_y,key_w,key_h,doX,doY)) return middleify_tone(tone_i);
+    tone_i++;
+    key_x += key_w;
+  }
+
+  //canonical
+  n_keys_displayed = tones_per_octave;
+  key_w = w/n_keys_displayed;
+  key_x = x;
+  key_h = note_h*2;
+  tone_i = 0;
+  progression_i = 0;
+  for(var i = 0; i < n_keys_displayed; i++)
+  {
+    if(ptWithin(key_x,canonboard_y,key_w,key_h,doX,doY)) return middleify_tone(tone_i);
     tone_i++;
     key_x += key_w;
   }

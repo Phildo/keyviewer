@@ -67,9 +67,14 @@ var GamePlayScene = function(game, stage)
     ctx.strokeRect(0,0,canv.width,canv.height);
     var disp_tone = tone;
     var disp_mode = mode;
-    if(hover_tone != -1) disp_tone = hover_tone;
-    if(hover_mode !=  0) disp_mode = hover_mode;
-    draw_scale(disp_tone, disp_mode, draw_x, draw_y, draw_note_h, ctx);
+    var hovering = 0;
+    if(hover_tone != -1 && disp_tone != hover_tone) { disp_tone = hover_tone; hovering = 1; }
+    if(hover_mode !=  0 && disp_mode != hover_mode) { disp_mode = hover_mode; hovering = 1; }
+    draw_scale(disp_tone, disp_mode, draw_x, draw_y, draw_note_h, hovering ? 0.6 : 1, ctx);
+    ctx.fillStyle = gray;
+    if(mode == major) fillBox(major_btn,ctx)
+    if(mode == minor) fillBox(minor_btn,ctx)
+    ctx.fillStyle = black;
     ctx.fillText("Major",major_btn.x+major_btn.w/2,major_btn.y+30); strokeBox(major_btn,ctx);
     ctx.fillText("Minor",minor_btn.x+minor_btn.w/2,minor_btn.y+30); strokeBox(minor_btn,ctx);
   };

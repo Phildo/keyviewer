@@ -27,7 +27,7 @@ var Catcher = function(init)
   }
   self.hover = function(evt)
   {
-    self.evt = evt;
+    if(!self.clicked) self.evt = evt;
   }
   self.unhover = function(evt)
   {
